@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f8f5f7">
+<title>Private Visitor Dashboard · Parinita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f8f5f7;--ink:#211d2a;--muted:#716b7a;--line:#e4dbe9;--purple:#654b8a;--white:#fff}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif}.wrap{width:min(1180px,92%);margin:0 auto;padding:45px 0 70px}.brand{font:700 30px "Playfair Display",serif}.brand span{color:#9a80bf}.eyebrow{font:10px "DM Mono",monospace;letter-spacing:.12em;color:var(--purple);margin-top:30px}.head{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:30px}.head h1{font:600 clamp(35px,5vw,58px)/1.05 "Playfair Display",serif;letter-spacing:-.04em;margin:8px 0}.head p{color:var(--muted);font-size:13px;max-width:520px}.badge{font:10px "DM Mono",monospace;background:#eee5f4;color:var(--purple);border-radius:30px;padding:10px 14px;white-space:nowrap}.panel,.stat,.table-wrap{background:white;border:1px solid var(--line);border-radius:10px}.login{max-width:440px;padding:28px;margin:50px auto}.login h2{font:500 26px "Playfair Display",serif;margin:0 0 8px}.login p{color:var(--muted);font-size:13px}.label{font-size:11px;font-weight:600;display:block;margin:18px 0 7px}input{width:100%;padding:13px;border:1px solid var(--line);border-radius:6px;font:inherit;outline:none}input:focus{border-color:#9a80bf}button{cursor:pointer;border:0;border-radius:6px;background:var(--ink);color:#fff;padding:13px 17px;font-weight:600;margin-top:14px}button:hover{background:var(--purple)}.login button{width:100%}.error{color:#a13c4c;font-size:12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:25px 0}.stat{padding:21px}.stat small{font:10px "DM Mono",monospace;color:var(--muted);letter-spacing:.06em}.stat strong{display:block;font:600 34px "Playfair Display",serif;margin-top:7px;overflow-wrap:anywhere}.table-wrap{overflow:auto}.table-head{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;gap:15px}.table-head h2{font:500 23px "Playfair Display",serif;margin:0}.table-head button{margin:0;padding:9px 12px;font-size:11px}table{border-collapse:collapse;width:100%;min-width:930px;font-size:12px}th,td{text-align:left;padding:13px 15px;border-top:1px solid #eee8f1;vertical-align:top}th{font:9px "DM Mono",monospace;color:#7d7189;letter-spacing:.06em;background:#fbf9fc}td{max-width:260px;overflow-wrap:anywhere}.sub{display:block;color:#81768b;font-size:10px;margin-top:3px}.empty{padding:35px;text-align:center;color:var(--muted)}.foot{font-size:11px;color:var(--muted);margin-top:18px;line-height:1.7}.hidden{display:none!important}@media(max-width:650px){.wrap{padding-top:25px}.head{display:block}.badge{display:inline-block;margin-top:10px}.stats{grid-template-columns:1fr}.stat{padding:16px}.stat strong{font-size:28px}.login{margin:35px auto;padding:22px}}
+</style></head>
+<body><main class="wrap">
+  <a href="index.html" class="brand">P<span>.</span></a>
+  <div class="head"><div><div class="eyebrow">PRIVATE AREA / OWNER ONLY</div><h1>Visitor <em>dashboard.</em></h1><p>Review visit counts, IP addresses and approximate IP-based locations. These records are private and are not shown on the public portfolio.</p></div><span class="badge">🔒 PRIVATE DASHBOARD</span></div>
+  <section class="panel login" id="loginPanel"><h2>Owner sign in</h2><p>Enter the dashboard password you set in Vercel environment variables.</p><label class="label" for="password">Dashboard password</label><input id="password" type="password" autocomplete="current-password" placeholder="Enter your private password"><button id="loginButton">Open dashboard ↗</button><div class="error" id="loginError" role="status"></div></section>
+  <section id="dashboard" class="hidden">
+    <div class="stats"><article class="stat"><small>TOTAL RECORDED VISITS</small><strong id="total">—</strong></article><article class="stat"><small>VISITS WITH IP ADDRESS</small><strong id="ipCount">—</strong></article><article class="stat"><small>VISITS WITH LOCATION</small><strong id="locationCount">—</strong></article></div>
+    <div class="table-wrap"><div class="table-head"><h2>Recent visitors</h2><button id="refresh">Refresh ↻</button></div><div id="tableContent"><div class="empty">Loading visit records…</div></div></div>
+    <p class="foot">Location is estimated from the visitor's public IP and may be inaccurate. VPNs, proxies, mobile networks, and privacy tools can affect it. The table displays up to the 500 most recent records. Avoid sharing screenshots or exporting these records publicly.</p>
+    <button id="logout" type="button">Lock dashboard</button>
+  </section>
+</main>
+<script>
+const loginPanel=document.getElementById('loginPanel'), dashboard=document.getElementById('dashboard'), passwordInput=document.getElementById('password'), loginError=document.getElementById('loginError');
+let secret='';
+function esc(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function loadVisits(){
+  const box=document.getElementById('tableContent');box.innerHTML='<div class="empty">Loading visit records…</div>';
+  try{
+    const res=await fetch('/api/admin-visits',{headers:{Authorization:'Bearer '+secret},cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Could not load visits.');
+    const visits=data.visits||[];
+    document.getElementById('total').textContent=data.count??visits.length;
+    document.getElementById('ipCount').textContent=visits.filter(v=>v.ip_address).length;
+    document.getElementById('locationCount').textContent=visits.filter(v=>v.city||v.region||v.country).length;
+    if(!visits.length){box.innerHTML='<div class="empty">No visits recorded yet. Open your public portfolio after deployment to test tracking.</div>';return;}
+    box.innerHTML='<table><thead><tr><th>DATE / TIME</th><th>IP ADDRESS</th><th>APPROXIMATE LOCATION</th><th>DEVICE / BROWSER</th><th>REFERRER</th></tr></thead><tbody>'+visits.map(v=>{
+      const loc=[v.city,v.region,v.country].filter(Boolean).join(', ')||'Unavailable';
+      const geo=(v.latitude!=null&&v.longitude!=null)?'<span class="sub">'+esc(v.latitude)+', '+esc(v.longitude)+'</span>':'';
+      return '<tr><td>'+esc(v.visited_at?new Date(v.visited_at).toLocaleString():'—')+'</td><td>'+esc(v.ip_address)+'</td><td>'+esc(loc)+geo+'</td><td>'+esc(v.user_agent)+'</td><td>'+esc(v.referrer)+'</td></tr>';
+    }).join('')+'</tbody></table>';
+  }catch(err){box.innerHTML='<div class="empty">'+esc(err.message)+'</div>';if(String(err.message).includes('password')){loginPanel.classList.remove('hidden');dashboard.classList.add('hidden');}}
+}
+document.getElementById('loginButton').addEventListener('click',async()=>{secret=passwordInput.value.trim();if(!secret){loginError.textContent='Enter your dashboard password.';return;}loginError.textContent='';loginPanel.classList.add('hidden');dashboard.classList.remove('hidden');await loadVisits();});
+passwordInput.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginButton').click();});
+document.getElementById('refresh').addEventListener('click',loadVisits);
+document.getElementById('logout').addEventListener('click',()=>{secret='';passwordInput.value='';dashboard.classList.add('hidden');loginPanel.classList.remove('hidden');loginError.textContent='';});
+</script></body></html>

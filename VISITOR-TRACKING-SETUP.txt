@@ -1,0 +1,20 @@
+VISITOR TRACKING SETUP
+======================
+
+The code is included, but tracking requires your own Supabase database and Vercel environment variables.
+
+1. In Supabase, create a project.
+2. Run the SQL in supabase-visitors.sql in Supabase SQL Editor.
+3. In Vercel > Project > Settings > Environment Variables, add:
+   SUPABASE_URL
+   SUPABASE_SERVICE_ROLE_KEY
+   ADMIN_DASHBOARD_PASSWORD
+4. Redeploy the portfolio.
+5. Open the public portfolio once; check that the footer visit count updates.
+6. Open /admin.html and enter the dashboard password to see visit records.
+
+Security:
+- Keep SUPABASE_SERVICE_ROLE_KEY and ADMIN_DASHBOARD_PASSWORD out of frontend files.
+- Visitor IP and approximate location are personal data. The portfolio displays a disclosure notice.
+- City/coordinates are IP-based estimates, not precise physical location.
+- Do not use the dashboard to expose or publish individual visitors' records.
